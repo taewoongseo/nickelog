@@ -13,6 +13,9 @@ final class TicketStore: ObservableObject {
     /// a ticket never frees its number for reuse.
     private var lastSerialNumber = 0
 
+    /// The serial the next ticket will receive, so previews can show it before saving.
+    var nextSerialNumber: Int { lastSerialNumber + 1 }
+
     func add(_ ticket: Ticket) {
         tickets.insert(ticket, at: 0)
     }

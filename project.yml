@@ -38,6 +38,18 @@ targets:
           - UIInterfaceOrientationPortrait
         ITSAppUsesNonExemptEncryption: NO
         TMDB_API_KEY: "$(TMDB_API_KEY)"
+        UIAppFonts:
+          - AbrilFatface-Regular.ttf
+          - Anton-Regular.ttf
+          - OldStandard-Italic.ttf
+          - CourierPrime-Bold.ttf
+          - Limelight-Regular.ttf
+          - BodoniModa-Variable.ttf
+          - CormorantGaramond-Italic-Variable.ttf
+          - SpecialElite-Regular.ttf
+          - RozhaOne-Regular.ttf
+          - Oswald-Variable.ttf
+          - EBGaramond-Italic-Variable.ttf
     testTargets:
       - Nickelog
 

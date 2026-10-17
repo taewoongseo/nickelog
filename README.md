@@ -33,9 +33,9 @@ Whenever you add/remove/rename Swift files or change build settings, edit `proje
 Nickelog/
   App/          — app entry point, root tab view
   Features/     — one folder per screen/flow (Search, Log, Ticket, Collection)
-  Models/       — Movie, Ticket
-  Services/     — TMDBService (movie search), TicketStore (in-memory for now — will move to Supabase per VISION.md §7.2/§7.6)
-  Resources/    — Assets.xcassets
+  Models/       — Movie, Ticket, TicketDesign, TicketInput
+  Services/     — TMDBService (movie search), TicketStore (in-memory for now — will move to Supabase per VISION.md §8.2/§8.6)
+  Resources/    — Assets.xcassets (app icon, paper grain), Fonts/ (bundled ticket fonts)
 NickelogTests/     — unit tests
 NickelogUITests/   — UI tests
 Config/            — xcconfig files (Secrets.xcconfig is gitignored; commit only the .example)
@@ -45,7 +45,7 @@ VISION.md          — product vision, competitive research, roadmap
 
 ## Current state
 
-Early scaffold: movie search (TMDB) → log form → placeholder ticket view → in-memory collection, wired end-to-end but with placeholder visuals. Final ticket design is being done separately (see VISION.md Phase 0) and will replace `TicketView`'s placeholder layout once ready.
+V1 core loop works end to end: movie search (TMDB) → log form → pick one of three ticket designs → finished ticket → in-memory collection. Tickets live in memory only for now; sign-in and cloud sync (Supabase) come next.
 
 ## Claude Code workflow
 

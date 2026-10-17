@@ -14,13 +14,13 @@ cp Config/Secrets.xcconfig.example Config/Secrets.xcconfig
 xcodegen generate
 
 # Build
-xcodebuild -project Nickelog.xcodeproj -scheme Nickelog -destination 'platform=iOS Simulator,name=iPhone 16' build
+xcodebuild -project Nickelog.xcodeproj -scheme Nickelog -destination 'platform=iOS Simulator,name=iPhone 17' build
 
 # Run all tests (unit + UI)
-xcodebuild -project Nickelog.xcodeproj -scheme Nickelog -destination 'platform=iOS Simulator,name=iPhone 16' test
+xcodebuild -project Nickelog.xcodeproj -scheme Nickelog -destination 'platform=iOS Simulator,name=iPhone 17' test
 
 # Run a single unit test
-xcodebuild -project Nickelog.xcodeproj -scheme Nickelog -destination 'platform=iOS Simulator,name=iPhone 16' \
+xcodebuild -project Nickelog.xcodeproj -scheme Nickelog -destination 'platform=iOS Simulator,name=iPhone 17' \
   -only-testing:NickelogTests/TicketStoreTests/testAddInsertsAtFront test
 ```
 
@@ -32,7 +32,7 @@ In practice, opening `Nickelog.xcodeproj` in Xcode and using Cmd-R / Cmd-U is th
 
 Native iOS app, Swift + SwiftUI, iOS 17+, no external dependencies yet. Full product context (why native, why iOS-first, data model, roadmap) is in [VISION.md](VISION.md) — read it for product rationale before making architectural changes; this file only covers code structure.
 
-**Current state: early scaffold.** The core loop is wired end-to-end (search → log → ticket → collection) but with placeholder persistence and placeholder ticket visuals — both called out explicitly in the source as temporary.
+**Current state: V1 core loop working, persistence still a placeholder.** The loop is wired end-to-end (search → log → pick design → ticket → collection) with the designed ticket in three palettes. Persistence is in memory only, a deliberate placeholder for Supabase.
 
 ### Flow and layering
 
@@ -41,18 +41,20 @@ NickelogApp (@main)
   → owns the single TicketStore, injected via .environmentObject
   → RootView: TabView { CollectionView, SearchView }
 
-SearchView --(TMDBService.searchMovies)--> Movie results
-  --navigationDestination--> LogFormView(movie)
-    --on submit, builds a Ticket, calls ticketStore.add--> TicketView(ticket)
+SearchView (owns the NavigationPath) --(TMDBService.searchMovies)--> Movie results
+  --navigationDestination--> LogFormView(movie, onFinish)
+    --"Pick a Design"--> TicketDesignPickerView(draft)
+      --on pick, ticketStore.addAssigningSerial--> TicketView(ticket, onDone)
+        --"Done" calls onFinish, which clears SearchView's path--> back to search
 
 CollectionView reads ticketStore.tickets --navigationDestination--> TicketView(ticket)
 ```
 
 - `Features/` is one folder per screen, each a single `View` file — there's no separate ViewModel layer; state lives in `@State` on the view or in the shared `TicketStore`.
-- `Models/` (`Movie`, `Ticket`) are plain `Codable`/`Identifiable`/`Hashable` structs used both as TMDB DTOs (`Movie`) and as the app's persisted record (`Ticket`) — no separate DTO/domain-model split.
-- `Services/TicketStore` is an in-memory `@MainActor` `ObservableObject` — a deliberate placeholder for Supabase-backed persistence (VISION.md §7.2/§7.6). It's kept as an `ObservableObject` specifically so the swap won't require UI-layer changes; new persistence-touching code should go through `TicketStore`'s methods rather than adding a parallel storage path.
+- `Models/` (`Movie`, `Ticket`) are plain `Codable`/`Identifiable`/`Hashable` structs used both as TMDB DTOs (`Movie`) and as the app's persisted record (`Ticket`) — no separate DTO/domain-model split. `TicketDesign` is the enum of the three designs (its raw value is stored in `Ticket.templateID`). `TicketInput` holds the input rules (location capped at 25 characters, trimmed, newlines turned into spaces, blank means `nil`; review capped at 80) and `Movie.releaseYear`.
+- `Services/TicketStore` is an in-memory `@MainActor` `ObservableObject` — a deliberate placeholder for Supabase-backed persistence (VISION.md §8.2/§8.6). It's kept as an `ObservableObject` specifically so the swap won't require UI-layer changes; new persistence-touching code should go through `TicketStore`'s methods rather than adding a parallel storage path. Tickets get their permanent serial number from `addAssigningSerial(_:)`, which uses a counter that only increases (never reused after a delete); `nextSerialNumber` previews it. The plain `add(_:)` does not assign a serial, so app code should use `addAssigningSerial`.
 - `Services/TMDBService` reads `TMDB_API_KEY` from `Info.plist` (populated at build time from `Config/Secrets.xcconfig` via `project.yml`'s `info.properties.TMDB_API_KEY`) — never hardcode the key in Swift source.
-- `TicketView` is currently a placeholder layout (see its doc comment). A locked, high-fidelity design hand-off exists at [`Design/ticket-and-logo/`](Design/ticket-and-logo/handoff.md) (notched-outline `Shape` geometry, three palette variants, fonts, ticket copy spec) — `TicketView` should be rebuilt natively against that spec (SwiftUI `Shape`/`Path`/`Text`, per VISION.md §8.4) rather than the current placeholder styling.
+- The ticket is built natively in SwiftUI under `Features/Ticket/`, following the locked design hand-off in `Design/ticket-and-logo/handoff.md` (a local-only folder, not in the public repo). `TicketCard` is the layout (main body plus stub), sized by a scale factor from the 1300×640 reference in `TicketMetrics`; `NotchedTicketShape` is the six-notch outline; `TicketDecoration` holds the rules, hatched stripe, corner stars and `PaperGrainOverlay`; `TicketTheme` defines the three palettes and their fonts; `TicketDesignPickerView` is the design-choice step; `TicketView` frames the finished ticket. The 11 fonts live in `Resources/Fonts/` and are registered in `project.yml` under `UIAppFonts`. `TicketThemeTests` fails if any theme font name doesn't load, since a wrong name silently falls back to the system font.
 
 ### Secrets
 

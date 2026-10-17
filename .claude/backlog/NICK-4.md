@@ -1,7 +1,7 @@
 # PRD: Rebuild TicketView in SwiftUI from the design hand-off
 
 **Ticket:** NICK-4
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Created:** 2026-10-17
 
 ---
@@ -31,17 +31,17 @@ Build the designed ticket as real SwiftUI views (a six-notch outline shape, main
 | 2 | Add serial assignment to `TicketStore`: a counter that only increases, assigned when a ticket is created, never reused (existing `add`/`delete` unchanged) | ✅ Done |
 | 3 | Add input rules: location sanitizing (25-character cap, trim, strip newlines, whitespace-only counts as blank) and release-year parsing from `Movie.releaseDate` (empty when missing) | ✅ Done |
 | 4 | Add unit tests for the serial counter, location sanitizing, and year parsing | ✅ Done |
-| 5 | Download the 11 hand-off fonts into `Nickelog/Resources/Fonts/`, register them under `UIAppFonts` in `project.yml`, and run `xcodegen generate` | ⬜ Not started |
-| 6 | Convert `paper-texture-A.png` once into a smaller neutral grayscale grain and add it to resources | ⬜ Not started |
-| 7 | Define the three palettes (A burgundy, B amber, C blue) as theme values: colors, fonts, accents, per the hand-off | ⬜ Not started |
-| 8 | Build the six-notch ticket outline as a custom `Shape` that scales from the 1300x640 reference | ⬜ Not started |
-| 9 | Build the ticket card layout: main body (title, year, bordered date/location box, dashed divider with star, review) and stub (rotated "ADMIT ONE", serial, "5¢", NICKELOG) | ⬜ Not started |
-| 10 | Add the decorative details: double-rule border, corner stars, diagonal-stripe accent, and the grain multiplied over the paper color | ⬜ Not started |
-| 11 | Apply the fit rules: title shrinks to fit; location is one line shrinking to about 80%; review wraps within the 80-character cap; blank location and missing year stay empty | ⬜ Not started |
-| 12 | Rebuild `TicketView` around the new card, shown in portrait with about 24pt side margins (no rotation), keeping the existing share button | ⬜ Not started |
-| 13 | Build the design-picker view showing the user's real ticket in each of the three palettes | ⬜ Not started |
-| 14 | Update `LogFormView`: location optional and no longer required to print, 25-character cap, no future dates, pass the release year, and create the ticket (assigning its serial) only after a design is picked, then go to the finished ticket | ⬜ Not started |
-| 15 | Regenerate the project and run build and tests | ⬜ Not started |
+| 5 | Download the 11 hand-off fonts into `Nickelog/Resources/Fonts/`, register them under `UIAppFonts` in `project.yml`, and run `xcodegen generate` | ✅ Done |
+| 6 | Convert `paper-texture-A.png` once into a smaller neutral grayscale grain and add it to resources | ✅ Done |
+| 7 | Define the three palettes (A burgundy, B amber, C blue) as theme values: colors, fonts, accents, per the hand-off | ✅ Done |
+| 8 | Build the six-notch ticket outline as a custom `Shape` that scales from the 1300x640 reference | ✅ Done |
+| 9 | Build the ticket card layout: main body (title, year, bordered date/location box, dashed divider with star, review) and stub (rotated "ADMIT ONE", serial, "5¢", NICKELOG) | ✅ Done |
+| 10 | Add the decorative details: double-rule border, corner stars, diagonal-stripe accent, and the grain multiplied over the paper color | ✅ Done |
+| 11 | Apply the fit rules: title shrinks to fit; location is one line shrinking to about 80%; review wraps within the 80-character cap; blank location and missing year stay empty | ✅ Done |
+| 12 | Rebuild `TicketView` around the new card, shown in portrait with about 24pt side margins (no rotation), keeping the existing share button | ✅ Done |
+| 13 | Build the design-picker view showing the user's real ticket in each of the three palettes | ✅ Done |
+| 14 | Update `LogFormView`: location optional and no longer required to print, 25-character cap, no future dates, pass the release year, and create the ticket (assigning its serial) only after a design is picked, then go to the finished ticket | ✅ Done |
+| 15 | Regenerate the project and run build and tests | ✅ Done |
 
 **Status legend:**
 - ⬜ Not started

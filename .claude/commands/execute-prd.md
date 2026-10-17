@@ -45,11 +45,11 @@ For each task in the PRD:
 4. **If new Swift files were added, removed, or renamed**, update `project.yml` accordingly and run `xcodegen generate` to regenerate `Nickelog.xcodeproj` — do not leave the project file out of sync
 5. **Verify** — run:
    ```bash
-   xcodebuild -project Nickelog.xcodeproj -scheme Nickelog -destination 'platform=iOS Simulator,name=iPhone 16' build
+   xcodebuild -project Nickelog.xcodeproj -scheme Nickelog -destination 'platform=iOS Simulator,name=iPhone 17' build
    ```
    and, if the task touches tested logic (e.g. `TicketStore`), also run the relevant test target:
    ```bash
-   xcodebuild -project Nickelog.xcodeproj -scheme Nickelog -destination 'platform=iOS Simulator,name=iPhone 16' test
+   xcodebuild -project Nickelog.xcodeproj -scheme Nickelog -destination 'platform=iOS Simulator,name=iPhone 17' test
    ```
 6. **Update the PRD file** — change that task's status from ⬜ to ✅ Done
 7. **Print**: `✅ Task <N> complete.`

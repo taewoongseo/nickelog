@@ -6,11 +6,12 @@ struct SearchView: View {
     @State private var results: [Movie] = []
     @State private var isSearching = false
     @State private var errorMessage: String?
+    @State private var path = NavigationPath()
 
     private let tmdbService = TMDBService()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             List(results) { movie in
                 NavigationLink(value: movie) {
                     HStack {
@@ -31,7 +32,7 @@ struct SearchView: View {
             }
             .navigationTitle("Log a Movie")
             .navigationDestination(for: Movie.self) { movie in
-                LogFormView(movie: movie)
+                LogFormView(movie: movie, onFinish: { path = NavigationPath() })
             }
             .searchable(text: $query, prompt: "Search for a movie")
             .onChange(of: query) { _, newValue in

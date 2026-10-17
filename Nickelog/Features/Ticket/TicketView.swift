@@ -1,23 +1,40 @@
 import SwiftUI
 
-/// Placeholder ticket layout. Final visual design (typography, texture, template
-/// variants — VISION.md §7.4) is being designed separately; this view exists so
-/// the log → ticket flow is wired end-to-end while that design lands.
+/// The finished ticket, shown in portrait with side margins like a wallet pass.
+/// The card itself lives in `TicketCard`; this screen only frames it and offers sharing.
 struct TicketView: View {
     let ticket: Ticket
+    /// Set when the ticket was just printed. The back button is replaced by "Done",
+    /// so the user can't step back into the picker and print the same ticket again.
+    var onDone: (() -> Void)?
+
+    private let sideMargin: CGFloat = 24
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 28) {
+            Spacer(minLength: 0)
+
             TicketCard(ticket: ticket)
-                .padding()
+                .shadow(color: .black.opacity(0.18), radius: 20, y: 9)
+                .padding(.horizontal, sideMargin)
 
             ShareLink(item: shareText) {
                 Label("Share", systemImage: "square.and.arrow.up")
             }
             .buttonStyle(.borderedProminent)
+
+            Spacer(minLength: 0)
         }
         .navigationTitle("Your Ticket")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(onDone != nil)
+        .toolbar {
+            if let onDone {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done", action: onDone)
+                }
+            }
+        }
     }
 
     private var shareText: String {
@@ -25,57 +42,8 @@ struct TicketView: View {
     }
 }
 
-private struct TicketCard: View {
-    let ticket: Ticket
-
-    private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter
-    }()
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("ADMIT ONE")
-                .font(.caption)
-                .tracking(4)
-                .foregroundStyle(.secondary)
-
-            Text(ticket.title)
-                .font(.title2.bold())
-
-            HStack {
-                Text(Self.dateFormatter.string(from: ticket.dateWatched))
-                Spacer()
-                Text(ticket.location ?? "")
-            }
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-
-            Divider()
-
-            Text("\u{201C}\(ticket.oneLineReview)\u{201D}")
-                .font(.body.italic())
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
-        )
-    }
-}
-
 #Preview {
     NavigationStack {
-        TicketView(
-            ticket: Ticket(
-                tmdbMovieID: 1,
-                title: "In the Mood for Love",
-                posterURL: nil,
-                dateWatched: .now,
-                location: "Metrograph",
-                oneLineReview: "Every glance said more than the dialogue ever could."
-            )
-        )
+        TicketView(ticket: .previewSample)
     }
 }
