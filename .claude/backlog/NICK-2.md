@@ -28,3 +28,8 @@ Design the V1 backend: database tables, row-level security rules, and auth confi
 - V1 only: do not design `follows` or public-profile fields yet (VISION.md V2). Leave room so adding them is additive.
 - Serial number is the user's personal ticket count; decide whether it is derived (count of rows) or stored, so deleting a ticket doesn't create duplicates or gaps.
 - Free-tier Supabase projects pause after about a week of inactivity.
+
+## Update (2026-10-17, from NICK-4 exploration)
+- Serial decision settled: each ticket gets a permanent serial at creation from a counter that only increases (never reused, gaps fine). Rewatches are allowed, so serial is per ticket, not per movie.
+- Schema impact: the counter must be stored per user (e.g. a `next_serial` on `profiles`, or a database sequence per user), not derived as max(existing)+1, otherwise deleting the newest ticket would reuse its number.
+- `tickets` also needs: release year (nullable), serial, nullable location (max 25 chars), and a design id.
