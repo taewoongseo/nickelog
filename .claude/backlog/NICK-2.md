@@ -33,3 +33,4 @@ Design the V1 backend: database tables, row-level security rules, and auth confi
 - Serial decision settled: each ticket gets a permanent serial at creation from a counter that only increases (never reused, gaps fine). Rewatches are allowed, so serial is per ticket, not per movie.
 - Schema impact: the counter must be stored per user (e.g. a `next_serial` on `profiles`, or a database sequence per user), not derived as max(existing)+1, otherwise deleting the newest ticket would reuse its number.
 - `tickets` also needs: release year (nullable), serial, nullable location (max 25 chars), and a design id.
+- (from NICK-6 exploration) `tickets` should store `created_at` and `updated_at` separately; `updated_at` changes when a ticket is edited. Collection order is not changed by edits for now.
