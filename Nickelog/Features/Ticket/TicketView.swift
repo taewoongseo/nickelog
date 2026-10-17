@@ -47,7 +47,7 @@ private struct TicketCard: View {
             HStack {
                 Text(Self.dateFormatter.string(from: ticket.dateWatched))
                 Spacer()
-                Text(ticket.location)
+                Text(ticket.location ?? "")
             }
             .font(.subheadline)
             .foregroundStyle(.secondary)

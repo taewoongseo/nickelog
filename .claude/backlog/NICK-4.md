@@ -27,10 +27,10 @@ Build the designed ticket as real SwiftUI views (a six-notch outline shape, main
 
 | # | Task | Status |
 |---|------|--------|
-| 1 | Update `Ticket`: add optional release year and serial number, make `location` optional, and define the three design ids (stored in `templateID`) | ⬜ Not started |
-| 2 | Add serial assignment to `TicketStore`: a counter that only increases, assigned when a ticket is created, never reused (existing `add`/`delete` unchanged) | ⬜ Not started |
-| 3 | Add input rules: location sanitizing (25-character cap, trim, strip newlines, whitespace-only counts as blank) and release-year parsing from `Movie.releaseDate` (empty when missing) | ⬜ Not started |
-| 4 | Add unit tests for the serial counter, location sanitizing, and year parsing | ⬜ Not started |
+| 1 | Update `Ticket`: add optional release year and serial number, make `location` optional, and define the three design ids (stored in `templateID`) | ✅ Done |
+| 2 | Add serial assignment to `TicketStore`: a counter that only increases, assigned when a ticket is created, never reused (existing `add`/`delete` unchanged) | ✅ Done |
+| 3 | Add input rules: location sanitizing (25-character cap, trim, strip newlines, whitespace-only counts as blank) and release-year parsing from `Movie.releaseDate` (empty when missing) | ✅ Done |
+| 4 | Add unit tests for the serial counter, location sanitizing, and year parsing | ✅ Done |
 | 5 | Download the 11 hand-off fonts into `Nickelog/Resources/Fonts/`, register them under `UIAppFonts` in `project.yml`, and run `xcodegen generate` | ⬜ Not started |
 | 6 | Convert `paper-texture-A.png` once into a smaller neutral grayscale grain and add it to resources | ⬜ Not started |
 | 7 | Define the three palettes (A burgundy, B amber, C blue) as theme values: colors, fonts, accents, per the hand-off | ⬜ Not started |

@@ -9,8 +9,23 @@ import Foundation
 final class TicketStore: ObservableObject {
     @Published private(set) var tickets: [Ticket] = []
 
+    /// Highest serial number handed out so far. Only ever increases, so deleting
+    /// a ticket never frees its number for reuse.
+    private var lastSerialNumber = 0
+
     func add(_ ticket: Ticket) {
         tickets.insert(ticket, at: 0)
+    }
+
+    /// Stamps the ticket with the next serial number, then adds it.
+    /// Returns the ticket as stored, including its serial.
+    @discardableResult
+    func addAssigningSerial(_ ticket: Ticket) -> Ticket {
+        lastSerialNumber += 1
+        var numbered = ticket
+        numbered.serialNumber = lastSerialNumber
+        add(numbered)
+        return numbered
     }
 
     func delete(_ ticket: Ticket) {
