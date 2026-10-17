@@ -2,7 +2,7 @@
 id: NICK-3
 title: Get a TMDB API key and add it to Secrets.xcconfig
 type: chore
-status: backlog
+status: done
 created: 2026-10-17
 ---
 
@@ -23,3 +23,9 @@ Register for a free TMDB API key and put it in the local, gitignored `Config/Sec
 - Never paste the key into chat or commit it. The file is gitignored.
 - TMDB's free tier is non-commercial and requires attribution to TMDB inside the app. Revisit licensing if Nickelog adds paid premium templates.
 - The in-app search can only be tested once Xcode is installed; the key itself can be verified now with a curl request.
+
+## Resolution (2026-10-17)
+- Key obtained and stored in the local, gitignored `Config/Secrets.xcconfig`.
+- Verified from the command line: a TMDB search request returned HTTP 200 with results.
+- Remaining: confirm search works inside the app once Xcode is installed.
+- Reminder: the key was issued under TMDB's non-commercial certification. Get TMDB approval or a commercial license before any public or paid release.
