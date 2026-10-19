@@ -4,6 +4,6 @@ final class NickelogUITests: XCTestCase {
     func testAppLaunches() {
         let app = XCUIApplication()
         app.launch()
-        XCTAssertTrue(app.tabBars.buttons["Collection"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Collection"].waitForExistence(timeout: 5))
     }
 }

@@ -37,6 +37,7 @@ targets:
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         ITSAppUsesNonExemptEncryption: NO
+        UIUserInterfaceStyle: Light
         TMDB_API_KEY: "$(TMDB_API_KEY)"
         UIAppFonts:
           - AbrilFatface-Regular.ttf
@@ -45,6 +46,7 @@ targets:
           - CourierPrime-Bold.ttf
           - Limelight-Regular.ttf
           - BodoniModa-Variable.ttf
+          - BodoniModa-Italic-Variable.ttf
           - CormorantGaramond-Italic-Variable.ttf
           - SpecialElite-Regular.ttf
           - RozhaOne-Regular.ttf

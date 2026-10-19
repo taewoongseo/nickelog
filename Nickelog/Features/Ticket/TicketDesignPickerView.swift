@@ -19,30 +19,36 @@ struct TicketDesignPickerView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 28) {
-                ForEach(TicketDesign.allCases) { design in
-                    option(for: design)
+        VStack(spacing: 0) {
+            ScreenHeader(title: "Pick a Design")
+                .padding(.top, 8)
+
+            ScrollView {
+                VStack(spacing: 28) {
+                    ForEach(TicketDesign.allCases) { design in
+                        option(for: design)
+                    }
                 }
+                .padding(.horizontal, sideMargin)
+                .padding(.vertical, 20)
             }
-            .padding(.horizontal, sideMargin)
-            .padding(.vertical, 20)
         }
-        .safeAreaInset(edge: .bottom) {
+        .background(AppColor.ground.ignoresSafeArea())
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             Button {
                 onPick(selectedDesign)
             } label: {
                 Text("Print My Ticket")
-                    .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .buttonStyle(.primaryPill)
             .padding(.horizontal, sideMargin)
             .padding(.vertical, 12)
-            .background(.bar)
+            .background(AppColor.ground)
         }
-        .navigationTitle("Pick a Design")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .appBackButton("Log It")
+        .hidesTabBar()
     }
 
     private func option(for design: TicketDesign) -> some View {
@@ -54,13 +60,13 @@ struct TicketDesignPickerView: View {
                 TicketCard(ticket: preview, design: design)
                     .overlay {
                         NotchedTicketShape()
-                            .stroke(Color.accentColor, lineWidth: isSelected ? 4 : 0)
+                            .stroke(AppColor.ink, lineWidth: isSelected ? 4 : 0)
                     }
                     .shadow(color: .black.opacity(0.18), radius: 14, y: 6)
 
                 Text(design.displayName)
-                    .font(.subheadline.weight(isSelected ? .semibold : .regular))
-                    .foregroundStyle(isSelected ? Color.accentColor : .secondary)
+                    .appStyle(isSelected ? .bodyStrong : .secondary)
+                    .foregroundStyle(isSelected ? AppColor.ink : AppColor.ink2)
             }
         }
         .buttonStyle(.plain)

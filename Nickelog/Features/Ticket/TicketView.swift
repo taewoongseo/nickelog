@@ -19,26 +19,52 @@ struct TicketView: View {
                 .padding(.horizontal, sideMargin)
 
             ShareLink(item: shareText) {
-                Label("Share", systemImage: "square.and.arrow.up")
+                Label("Share Ticket", systemImage: "square.and.arrow.up")
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.primaryPill)
+            .padding(.horizontal, sideMargin)
 
             Spacer(minLength: 0)
         }
-        .navigationTitle("Your Ticket")
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(AppColor.ground.ignoresSafeArea())
+        .navigationTitle("No. \(ticket.formattedSerial)")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(onDone != nil)
         .toolbar {
-            if let onDone {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done", action: onDone)
-                }
+            ToolbarItem(placement: .principal) {
+                Text("No. \(ticket.formattedSerial)")
+                    .appStyle(.serial)
+                    .foregroundStyle(AppColor.ink)
             }
         }
+        .modifier(TicketNavigationModifier(onDone: onDone))
+        .hidesTabBar()
     }
 
     private var shareText: String {
         "\(ticket.title) — \(ticket.oneLineReview)"
+    }
+}
+
+/// Opened from the Ticket Book: a back button to it. Just printed: no way back,
+/// only "Done".
+private struct TicketNavigationModifier: ViewModifier {
+    let onDone: (() -> Void)?
+
+    func body(content: Content) -> some View {
+        if let onDone {
+            content
+                .navigationBarBackButtonHidden(true)
+                .toolbar {
+                    AppToolbarItem(placement: .topBarTrailing) {
+                        Button("Done", action: onDone)
+                            .buttonStyle(.redText)
+                    }
+                }
+                .swipeBackDisabled()
+        } else {
+            content.appBackButton("Ticket Book")
+        }
     }
 }
 

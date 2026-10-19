@@ -32,6 +32,7 @@ Whenever you add/remove/rename Swift files or change build settings, edit `proje
 ```
 Nickelog/
   App/          — app entry point, root tab view
+  DesignSystem/ — shared look: color tokens, type styles, buttons, search field, tab bar, back button
   Features/     — one folder per screen/flow (Search, Log, Ticket, Collection)
   Models/       — Movie, Ticket, TicketDesign, TicketInput
   Services/     — TMDBService (movie search), TicketStore (in-memory for now — will move to Supabase per VISION.md §8.2/§8.6)
