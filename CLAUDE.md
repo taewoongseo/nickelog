@@ -48,7 +48,8 @@ SearchView (owns the NavigationPath) --(TMDBService.searchMovies)--> Movie resul
       --on pick, ticketStore.addAssigningSerial--> TicketView(ticket, onDone)
         --"Done" calls onFinish, which clears SearchView's path--> back to search
 
-CollectionView reads ticketStore.tickets --navigationDestination--> TicketView(ticket)
+CollectionView reads ticketStore.tickets, shows the Ticket Book (or the empty, one-ticket, search state)
+  --navigationDestination--> TicketView(ticket)
 ```
 
 - `Features/` is one folder per screen, each a single `View` file — there's no separate ViewModel layer; state lives in `@State` on the view or in the shared `TicketStore`. The one exception is `DesignSystem/` (below), which holds code shared by every screen.
@@ -57,6 +58,7 @@ CollectionView reads ticketStore.tickets --navigationDestination--> TicketView(t
 - `Services/TicketStore` is an in-memory `@MainActor` `ObservableObject` — a deliberate placeholder for Supabase-backed persistence (VISION.md §8.2/§8.6). It's kept as an `ObservableObject` specifically so the swap won't require UI-layer changes; new persistence-touching code should go through `TicketStore`'s methods rather than adding a parallel storage path. Tickets get their permanent serial number from `addAssigningSerial(_:)`, which uses a counter that only increases (never reused after a delete); `nextSerialNumber` previews it. The plain `add(_:)` does not assign a serial, so app code should use `addAssigningSerial`.
 - `Services/TMDBService` reads `TMDB_API_KEY` from `Info.plist` (populated at build time from `Config/Secrets.xcconfig` via `project.yml`'s `info.properties.TMDB_API_KEY`) — never hardcode the key in Swift source.
 - The ticket is built natively in SwiftUI under `Features/Ticket/`, following the locked design hand-off in `Design/ticket-and-logo/handoff.md` (a local-only folder, not in the public repo). `TicketCard` is the layout (main body plus stub), sized by a scale factor from the 1300×640 reference in `TicketMetrics`; `NotchedTicketShape` is the six-notch outline; `TicketDecoration` holds the rules, hatched stripe, corner stars and `PaperGrainOverlay`; `TicketTheme` defines the three palettes and their fonts; `TicketDesignPickerView` is the design-choice step; `TicketView` frames the finished ticket. The bundled fonts live in `Resources/Fonts/` and are registered in `project.yml` under `UIAppFonts`. `TicketThemeTests` and `DesignSystemFontTests` fail if any font name doesn't load, since a wrong name silently falls back to the system font; `DesignSystemColorTests` does the same for a misspelled color name.
+- The Ticket Book (`Features/Collection/`) groups tickets by month of date watched (`TicketGrouping`, the one place to change ordering) and lays each month out with `RiffleLayout`, a custom `Layout` where tickets overlap and only the open one is fully shown. `TicketBookView` makes the ticket crossing a fixed line the open one as you scroll (with a selection haptic); `OneTicketView`, `TicketBookLoadingView` (not yet shown by the app, waits for cloud sync) and the search state in `CollectionView` cover the other states. `TicketSearch` matches title, place and the one-line review only. Avoid iOS 18-only scroll APIs; the target is iOS 17.
 
 ### Secrets
 

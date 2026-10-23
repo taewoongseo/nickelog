@@ -1,10 +1,19 @@
 import SwiftUI
 
 struct CollectionView: View {
+    /// Shows the loading placeholders instead of the book. Nothing in the app turns this
+    /// on yet; it is for previews now and for cloud sync later.
+    var isLoading = false
+
     @EnvironmentObject private var ticketStore: TicketStore
     @Environment(\.selectTab) private var selectTab
+    @State private var path = NavigationPath()
+    @State private var isSearching = false
+    @State private var query = ""
+    @FocusState private var searchFocused: Bool
 
     private var caption: String {
+        if isLoading { return TicketBookLoadingView.headerCaption }
         let count = ticketStore.tickets.count
         switch count {
         case 0: return "No screenings yet"
@@ -14,13 +23,33 @@ struct CollectionView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             VStack(spacing: 0) {
-                ScreenHeader(title: "Ticket Book", caption: caption)
+                if isSearching {
+                    searchHeader
+                } else {
+                    ScreenHeader(title: "Ticket Book", caption: caption) {
+                        if !isLoading && !ticketStore.tickets.isEmpty {
+                            IconButton(systemName: "magnifyingglass", accessibilityLabel: "Search tickets") {
+                                startSearching()
+                            }
+                        }
+                    }
                     .padding(.top, 8)
+                }
 
-                if ticketStore.tickets.isEmpty {
+                if isLoading {
+                    TicketBookLoadingView()
+                } else if ticketStore.tickets.isEmpty {
                     emptyState
+                } else if isSearching {
+                    searchResults
+                } else if let only = ticketStore.tickets.first, ticketStore.tickets.count == 1 {
+                    OneTicketView(
+                        ticket: only,
+                        nextSerialNumber: ticketStore.nextSerialNumber,
+                        onOpen: { path.append($0) }
+                    )
                 } else {
                     ticketList
                 }
@@ -67,30 +96,75 @@ struct CollectionView: View {
         .padding(.top, 26)
     }
 
-    private var ticketList: some View {
-        List(ticketStore.tickets) { ticket in
-            NavigationLink(value: ticket) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(ticket.title)
-                        .appStyle(.bodyStrong)
-                        .foregroundStyle(AppColor.ink)
-                    Text(ticket.oneLineReview)
-                        .appStyle(.secondary)
-                        .foregroundStyle(AppColor.ink2)
-                        .lineLimit(1)
-                }
-                .padding(.vertical, 4)
+    private var searchHeader: some View {
+        HStack(spacing: 12) {
+            AppSearchField(text: $query, placeholder: "Title, place or one line", isFocused: $searchFocused)
+
+            Button("Cancel") {
+                stopSearching()
             }
-            .listRowBackground(AppColor.surface)
-            .listRowSeparatorTint(AppColor.divider)
+            .buttonStyle(.redText)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .padding(.top, 12)
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+    }
+
+    private var matches: [Ticket] {
+        TicketSearch.results(in: ticketStore.tickets, query: query)
+    }
+
+    private var matchCaption: String {
+        let count = matches.count
+        return count == 1 ? "1 ticket matches" : "\(count) tickets match"
+    }
+
+    private var searchResults: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(matchCaption)
+                .appStyle(.label)
+                .foregroundStyle(AppColor.ink2)
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
+
+            // A fresh book for each query, so a ticket pinned open earlier can't be left
+            // selected after it drops out of the results.
+            TicketBookView(
+                sections: TicketGrouping.months(from: matches),
+                onOpen: {
+                    searchFocused = false
+                    path.append($0)
+                }
+            )
+            .id(query)
+        }
+    }
+
+    private func startSearching() {
+        query = ""
+        isSearching = true
+        searchFocused = true
+    }
+
+    private func stopSearching() {
+        searchFocused = false
+        query = ""
+        isSearching = false
+    }
+
+    private var ticketList: some View {
+        TicketBookView(
+            sections: TicketGrouping.months(from: ticketStore.tickets),
+            onOpen: { path.append($0) }
+        )
     }
 }
 
 #Preview {
     CollectionView()
+        .environmentObject(TicketStore())
+}
+
+#Preview("Loading") {
+    CollectionView(isLoading: true)
         .environmentObject(TicketStore())
 }
