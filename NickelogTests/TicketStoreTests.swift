@@ -112,4 +112,84 @@ final class TicketStoreTests: XCTestCase {
         XCTAssertNil(store.update(ghost))
         XCTAssertTrue(store.tickets.isEmpty)
     }
+
+    // MARK: Planned tickets
+
+    private func plannedFilm(_ title: String, scheduled: Date? = nil) -> Ticket {
+        Ticket(tmdbMovieID: title.count, title: title, releaseYear: 2000, posterURL: nil, dateWatched: .now, location: "Home", oneLineReview: "", scheduledDate: scheduled)
+    }
+
+    func testPlannedTicketGetsNoSerialAndNoReview() {
+        let store = TicketStore()
+        var draft = plannedFilm("Jaws")
+        draft.oneLineReview = "should be dropped"
+
+        let planned = store.addPlanned(draft)
+
+        XCTAssertTrue(planned.isPlanned)
+        XCTAssertEqual(planned.serialNumber, 0)
+        XCTAssertEqual(planned.oneLineReview, "")
+        XCTAssertEqual(planned.formattedSerial, "")
+        XCTAssertEqual(store.nextSerialNumber, 1)
+    }
+
+    func testPlannedTicketsDoNotCountAsLogged() {
+        let store = TicketStore()
+        store.addPlanned(plannedFilm("Jaws"))
+        store.addAssigningSerial(Ticket(tmdbMovieID: 9, title: "Heat", posterURL: nil, dateWatched: .now, location: nil, oneLineReview: "Great"))
+
+        XCTAssertEqual(store.loggedTickets.map(\.title), ["Heat"])
+        XCTAssertEqual(store.plannedTickets.map(\.title), ["Jaws"])
+    }
+
+    func testLoggingAPlannedTicketGivesItTheNextSerial() {
+        let store = TicketStore()
+        store.addAssigningSerial(Ticket(tmdbMovieID: 9, title: "Heat", posterURL: nil, dateWatched: .now, location: nil, oneLineReview: "Great"))
+        let planned = store.addPlanned(plannedFilm("Jaws"))
+        var logged = planned
+        logged.oneLineReview = "Bigger boat, please."
+
+        let result = store.logPlanned(logged)
+
+        XCTAssertEqual(result?.serialNumber, 2)
+        XCTAssertEqual(result?.isPlanned, false)
+        XCTAssertNil(result?.scheduledDate)
+        XCTAssertEqual(result?.oneLineReview, "Bigger boat, please.")
+        XCTAssertEqual(store.nextSerialNumber, 3)
+        XCTAssertTrue(store.plannedTickets.isEmpty)
+    }
+
+    func testDeletingAPlannedTicketDoesNotUseUpASerial() {
+        let store = TicketStore()
+        let planned = store.addPlanned(plannedFilm("Jaws"))
+        store.delete(planned)
+
+        let first = store.addAssigningSerial(Ticket(tmdbMovieID: 9, title: "Heat", posterURL: nil, dateWatched: .now, location: nil, oneLineReview: "Great"))
+
+        XCTAssertEqual(first.serialNumber, 1)
+    }
+
+    func testLoggingSomethingThatIsNotPlannedDoesNothing() {
+        let store = TicketStore()
+        let logged = store.addAssigningSerial(Ticket(tmdbMovieID: 9, title: "Heat", posterURL: nil, dateWatched: .now, location: nil, oneLineReview: "Great"))
+
+        XCTAssertNil(store.logPlanned(logged))
+        XCTAssertEqual(store.nextSerialNumber, 2)
+    }
+
+    func testEditingAPlannedTicketChangesDatePlaceAndDesignButNotReview() {
+        let store = TicketStore()
+        let planned = store.addPlanned(plannedFilm("Jaws"))
+        var edited = planned
+        edited.scheduledDate = Date(timeIntervalSince1970: 2_000_000_000)
+        edited.location = "Metrograph"
+        edited.oneLineReview = "sneaky"
+
+        let saved = store.update(edited)
+
+        XCTAssertEqual(saved?.scheduledDate, edited.scheduledDate)
+        XCTAssertEqual(saved?.location, "Metrograph")
+        XCTAssertEqual(saved?.oneLineReview, "")
+        XCTAssertNotNil(saved?.updatedAt)
+    }
 }

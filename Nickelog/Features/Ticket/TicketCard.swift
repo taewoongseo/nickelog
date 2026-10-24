@@ -107,7 +107,7 @@ private struct TicketMainBody: View {
         VStack(alignment: .leading, spacing: 20 * scale) {
             OrnamentDivider(theme: theme, scale: scale)
 
-            Text("\u{201C}\(ticket.oneLineReview)\u{201D}")
+            Text(ticket.isPlanned ? "Not yet screened" : "\u{201C}\(ticket.oneLineReview)\u{201D}")
                 .font(theme.review.font(scale: scale))
                 .lineSpacing(theme.review.lineSpacing(scale: scale))
                 .foregroundStyle(theme.inkSecondary)
@@ -117,6 +117,31 @@ private struct TicketMainBody: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxHeight: .infinity, alignment: .center)
+        .overlay(alignment: .bottomTrailing) {
+            if ticket.isPlanned {
+                ComingSoonStamp(theme: theme, scale: scale)
+            }
+        }
+    }
+}
+
+/// A faint, slightly tilted rubber stamp on a planned ticket. Decoration only: it stays
+/// quiet so the ticket itself remains the focus.
+private struct ComingSoonStamp: View {
+    let theme: TicketTheme
+    let scale: CGFloat
+
+    var body: some View {
+        Text("COMING SOON")
+            .font(theme.serialNumber.font(scale: scale * 0.8))
+            .tracking(theme.serialNumber.tracking * scale * 2)
+            .foregroundStyle(theme.serial)
+            .padding(.horizontal, 16 * scale)
+            .padding(.vertical, 8 * scale)
+            .overlay(RoundedRectangle(cornerRadius: 6 * scale).strokeBorder(theme.serial, lineWidth: 3 * scale))
+            .opacity(0.5)
+            .rotationEffect(.degrees(-6))
+            .accessibilityHidden(true)
     }
 }
 
@@ -131,9 +156,15 @@ private struct DateLocationBox: View {
         (TicketMetrics.mainFraction * (TicketMetrics.referenceWidth - 2 * TicketMetrics.inset) - 68 - 56) * scale
     }
 
+    /// The watched date, or for a planned ticket its scheduled date, or "TBD".
+    private var dateText: String {
+        let date = ticket.isPlanned ? ticket.scheduledDate : ticket.dateWatched
+        return date?.formatted(.dateTime.month(.abbreviated).day().year()) ?? "TBD"
+    }
+
     var body: some View {
         HStack(spacing: 0) {
-            cell(Text(ticket.dateWatched.formatted(.dateTime.month(.abbreviated).day().year())))
+            cell(Text(dateText))
                 .frame(width: boxWidth / 2.3, alignment: .leading)
 
             Rectangle()
@@ -196,10 +227,14 @@ private struct TicketStub: View {
                     .frame(height: unit * ratios[0])
 
                 section(unit * ratios[1], dashed: true) {
-                    Text(ticket.formattedSerial)
+                    // A film not yet watched has no number; "ADVANCE" holds the spot, as on
+                    // an advance-sale ticket, until it is logged.
+                    Text(ticket.isPlanned ? "ADVANCE" : ticket.formattedSerial)
                         .font(theme.serialNumber.font(scale: scale))
                         .tracking(theme.serialNumber.tracking * scale)
                         .foregroundStyle(theme.serial)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                 }
 
                 section(unit * ratios[2], dashed: true) {

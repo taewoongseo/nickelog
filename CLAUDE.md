@@ -43,13 +43,20 @@ NickelogApp (@main)
     custom floating AppTabBar drawn over it (hidden on pushed screens and while the keyboard is up)
 
 SearchView (owns the NavigationPath) --(TMDBService.searchMovies)--> Movie results
-  --navigationDestination--> LogFormView(movie, onFinish)
-    --"Pick a Design"--> TicketDesignPickerView(draft)
-      --on pick, ticketStore.addAssigningSerial--> TicketView(ticket, onDone)
-        --"Done" calls onFinish, which clears SearchView's path--> back to search
+  --tap a film--> FilmChoiceSheet: "Log My Stub" or "Save My Seat"
+    "Log My Stub" --navigationDestination--> LogFormView(movie, onFinish)
+      --"Pick a Design"--> TicketDesignPickerView(draft)
+        --on pick, ticketStore.addAssigningSerial--> TicketView(ticket, onDone)
+          --"Done" calls onFinish, which clears SearchView's path--> back to search
+    "Save My Seat" --navigationDestination--> PlanFormView(movie, onFinish)
+      --"Pick a Design"--> TicketDesignPickerView(draft, isPlanning)
+        --on pick, ticketStore.addPlanned--> TicketView(planned ticket, onDone)
 
-CollectionView reads ticketStore.tickets, shows the Ticket Book (or the empty, one-ticket, search state)
+CollectionView reads ticketStore.loggedTickets / plannedTickets, shows the Ticket Book
+  (Screened or Coming Soon, or the empty, one-ticket, search state)
   --navigationDestination--> TicketView(ticket)
+    a planned ticket's "Log My Stub" --> LogFormView(logging:) --> back on TicketView, now logged
+    Edit --> LogFormView(editing:) or PlanFormView(editing:)
 ```
 
 - `Features/` is one folder per screen, each a single `View` file — there's no separate ViewModel layer; state lives in `@State` on the view or in the shared `TicketStore`. The one exception is `DesignSystem/` (below), which holds code shared by every screen.
@@ -58,6 +65,7 @@ CollectionView reads ticketStore.tickets, shows the Ticket Book (or the empty, o
 - `Services/TicketStore` is an in-memory `@MainActor` `ObservableObject` — a deliberate placeholder for Supabase-backed persistence (VISION.md §8.2/§8.6). It's kept as an `ObservableObject` specifically so the swap won't require UI-layer changes; new persistence-touching code should go through `TicketStore`'s methods rather than adding a parallel storage path. Tickets get their permanent serial number from `addAssigningSerial(_:)`, which uses a counter that only increases (never reused after a delete); `nextSerialNumber` previews it. The plain `add(_:)` does not assign a serial, so app code should use `addAssigningSerial`.
 - `Services/TMDBService` reads `TMDB_API_KEY` from `Info.plist` (populated at build time from `Config/Secrets.xcconfig` via `project.yml`'s `info.properties.TMDB_API_KEY`) — never hardcode the key in Swift source.
 - The ticket is built natively in SwiftUI under `Features/Ticket/`, following the locked design hand-off in `Design/ticket-and-logo/handoff.md` (a local-only folder, not in the public repo). `TicketCard` is the layout (main body plus stub), sized by a scale factor from the 1300×640 reference in `TicketMetrics`; `NotchedTicketShape` is the six-notch outline; `TicketDecoration` holds the rules, hatched stripe, corner stars and `PaperGrainOverlay`; `TicketTheme` defines the three palettes and their fonts; `TicketDesignPickerView` is the design-choice step; `TicketView` frames the finished ticket. The bundled fonts live in `Resources/Fonts/` and are registered in `project.yml` under `UIAppFonts`. `TicketThemeTests` and `DesignSystemFontTests` fail if any font name doesn't load, since a wrong name silently falls back to the system font; `DesignSystemColorTests` does the same for a misspelled color name.
+- A film can also be saved to watch later (a *planned* ticket: `Ticket.isPlanned`, optional `scheduledDate`, no serial number or review). `TicketStore.addPlanned` saves one, `logPlanned` turns it into a logged ticket and gives it its serial then, and `loggedTickets` / `plannedTickets` split the list. After a film is tapped in search, `FilmChoiceSheet` asks "Log My Stub" or "Save My Seat"; saving goes through `PlanFormView` and the design picker. The Ticket Book has a Screened / Coming Soon switch (`BookTabSwitch`), and Coming Soon groups by scheduled month (`TicketGrouping.comingSoonMonths`) with a TBD group last.
 - The Ticket Book (`Features/Collection/`) groups tickets by month of date watched (`TicketGrouping`, the one place to change ordering) and lays each month out with `RiffleLayout`, a custom `Layout` where tickets overlap and only the open one is fully shown. `TicketBookView` makes the ticket crossing a fixed line the open one as you scroll (with a selection haptic); `OneTicketView`, `TicketBookLoadingView` (not yet shown by the app, waits for cloud sync) and the search state in `CollectionView` cover the other states. `TicketSearch` matches title, place and the one-line review only. Avoid iOS 18-only scroll APIs; the target is iOS 17.
 
 ### Secrets

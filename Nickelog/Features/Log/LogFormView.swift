@@ -11,6 +11,9 @@ struct LogFormView: View {
         /// Changing an existing ticket. The movie is locked. `onSaved` is called once the
         /// edit is saved; the caller closes the edit flow.
         case edit(ticket: Ticket, onSaved: () -> Void)
+        /// Logging a film that was saved to watch later: it keeps its design and takes its
+        /// number now. `onLogged` is called once it is logged; the caller returns to it.
+        case logPlanned(ticket: Ticket, onLogged: () -> Void)
     }
 
     let mode: Mode
@@ -44,17 +47,38 @@ struct LogFormView: View {
         _oneLineReview = State(initialValue: ticket.oneLineReview)
     }
 
+    init(logging planned: Ticket, onLogged: @escaping () -> Void) {
+        mode = .logPlanned(ticket: planned, onLogged: onLogged)
+        // The planned date is kept, but a film can't have been watched in the future.
+        _dateWatched = State(initialValue: min(planned.scheduledDate ?? Date(), Date()))
+        _location = State(initialValue: planned.location ?? "")
+        _oneLineReview = State(initialValue: "")
+    }
+
     private var title: String {
         switch mode {
         case .log(let movie, _): movie.title
-        case .edit(let ticket, _): ticket.title
+        case .edit(let ticket, _), .logPlanned(let ticket, _): ticket.title
         }
     }
 
     private var releaseYear: Int? {
         switch mode {
         case .log(let movie, _): movie.releaseYear
-        case .edit(let ticket, _): ticket.releaseYear
+        case .edit(let ticket, _), .logPlanned(let ticket, _): ticket.releaseYear
+        }
+    }
+
+    /// The design the picker starts on when logging a planned film.
+    private var startingDesign: TicketDesign? {
+        if case .logPlanned(let ticket, _) = mode { return ticket.design }
+        return nil
+    }
+
+    private var backLabel: String {
+        switch mode {
+        case .log: "Search"
+        case .edit, .logPlanned: "Ticket"
         }
     }
 
@@ -71,11 +95,11 @@ struct LogFormView: View {
         .background(AppColor.ground.ignoresSafeArea())
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .appBackButton(isEditing ? "Ticket" : "Search")
+        .appBackButton(backLabel)
         .hidesTabBar()
         .navigationDestination(isPresented: $navigateToPicker) {
             if let draftTicket {
-                TicketDesignPickerView(draft: draftTicket, isEditing: isEditing, onPick: createTicket)
+                TicketDesignPickerView(draft: draftTicket, isEditing: isEditing, startingDesign: startingDesign, onPick: createTicket)
             }
         }
         .navigationDestination(isPresented: $navigateToTicket) {
@@ -88,29 +112,12 @@ struct LogFormView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(isEditing ? "Editing" : "Now logging")
-                .appStyle(.label)
-                .foregroundStyle(AppColor.red)
-            Text(title)
-                .appStyle(.filmTitle)
-                .foregroundStyle(AppColor.ink)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-            if let year = releaseYear {
-                Text(String(year))
-                    .appStyle(.filmYear)
-                    .foregroundStyle(AppColor.ink2)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 24)
-        .padding(.top, 8)
+        FormFilmHeader(label: isEditing ? "Editing" : "Now logging", title: title, year: releaseYear)
     }
 
     private var slipSerial: String {
         switch mode {
-        case .log: String(format: "%06d", ticketStore.nextSerialNumber)
+        case .log, .logPlanned: String(format: "%06d", ticketStore.nextSerialNumber)
         case .edit(let ticket, _): ticket.formattedSerial
         }
     }
@@ -185,30 +192,15 @@ struct LogFormView: View {
     }
 
     private var pickDesignButton: some View {
-        VStack(spacing: 8) {
-            Button {
-                focusedField = nil
-                draftTicket = makeDraft()
-                navigateToPicker = true
-            } label: {
-                Text("Pick a Design \u{2192}")
-            }
-            .buttonStyle(.primaryPill)
-            .disabled(!isReviewWritten)
-            .accessibilityHint(isReviewWritten ? "" : "Add a one-line review to continue.")
-
-            if !isReviewWritten {
-                Text("Add a one-line review to continue.")
-                    .appStyle(.secondary)
-                    .foregroundStyle(AppColor.ink2)
-            }
+        PinnedActionBar(
+            title: "Pick a Design \u{2192}",
+            hint: isReviewWritten ? nil : "Add a one-line review to continue.",
+            isKeyboardUp: focusedField != nil
+        ) {
+            focusedField = nil
+            draftTicket = makeDraft()
+            navigateToPicker = true
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 10)
-        // 34pt above the bottom edge; tighter once the keyboard is up.
-        .padding(.bottom, focusedField == nil ? 34 : 10)
-        .frame(maxWidth: .infinity)
-        .background(AppColor.ground)
     }
 
     private func makeDraft() -> Ticket {
@@ -229,6 +221,15 @@ struct LogFormView: View {
             edited.location = TicketInput.savedLocation(location)
             edited.oneLineReview = TicketInput.savedReview(oneLineReview)
             return edited
+        case .logPlanned(let ticket, _):
+            var logged = ticket
+            logged.isPlanned = false
+            logged.scheduledDate = nil
+            logged.serialNumber = 0
+            logged.dateWatched = dateWatched
+            logged.location = TicketInput.savedLocation(location)
+            logged.oneLineReview = TicketInput.savedReview(oneLineReview)
+            return logged
         }
     }
 
@@ -246,6 +247,9 @@ struct LogFormView: View {
         case .edit(_, let onSaved):
             ticketStore.update(ticket)
             onSaved()
+        case .logPlanned(_, let onLogged):
+            ticketStore.logPlanned(ticket)
+            onLogged()
         }
     }
 }
@@ -260,6 +264,13 @@ struct LogFormView: View {
 #Preview("Editing") {
     NavigationStack {
         LogFormView(editing: .previewSample, onSaved: {})
+            .environmentObject(TicketStore())
+    }
+}
+
+#Preview("Logging a planned film") {
+    NavigationStack {
+        LogFormView(logging: .previewSample, onLogged: {})
             .environmentObject(TicketStore())
     }
 }

@@ -10,16 +10,19 @@ struct CollectionView: View {
     @State private var path = NavigationPath()
     @State private var isSearching = false
     @State private var query = ""
+    @State private var tab = BookTab.screened
     @FocusState private var searchFocused: Bool
 
-    private var caption: String {
+    /// The tickets on the side of the book that is showing.
+    private var shownTickets: [Ticket] {
+        tab == .screened ? ticketStore.loggedTickets : ticketStore.plannedTickets
+    }
+
+    /// Under the title: a loading note or "No screenings yet"; once there are tickets
+    /// the Screened / Coming Soon switch takes this place.
+    private var caption: String? {
         if isLoading { return TicketBookLoadingView.headerCaption }
-        let count = ticketStore.tickets.count
-        switch count {
-        case 0: return "No screenings yet"
-        case 1: return "1 ticket"
-        default: return "\(count) tickets"
-        }
+        return ticketStore.tickets.isEmpty ? "No screenings yet" : nil
     }
 
     var body: some View {
@@ -29,13 +32,23 @@ struct CollectionView: View {
                     searchHeader
                 } else {
                     ScreenHeader(title: "Ticket Book", caption: caption) {
-                        if !isLoading && !ticketStore.tickets.isEmpty {
+                        if !isLoading && !shownTickets.isEmpty {
                             IconButton(systemName: "magnifyingglass", accessibilityLabel: "Search tickets") {
                                 startSearching()
                             }
                         }
                     }
                     .padding(.top, 8)
+
+                    if !isLoading && !ticketStore.tickets.isEmpty {
+                        BookTabSwitch(
+                            selection: $tab,
+                            screenedCount: ticketStore.loggedTickets.count,
+                            comingSoonCount: ticketStore.plannedTickets.count
+                        )
+                        .padding(.top, 2)
+                        .padding(.bottom, 4)
+                    }
                 }
 
                 if isLoading {
@@ -44,7 +57,11 @@ struct CollectionView: View {
                     emptyState
                 } else if isSearching {
                     searchResults
-                } else if let only = ticketStore.tickets.first, ticketStore.tickets.count == 1 {
+                } else if tab == .screened && ticketStore.loggedTickets.isEmpty {
+                    emptyState
+                } else if tab == .comingSoon && ticketStore.plannedTickets.isEmpty {
+                    comingSoonEmptyState
+                } else if tab == .screened, let only = ticketStore.loggedTickets.first, ticketStore.loggedTickets.count == 1 {
                     OneTicketView(
                         ticket: only,
                         nextSerialNumber: ticketStore.nextSerialNumber,
@@ -80,7 +97,40 @@ struct CollectionView: View {
                     Button {
                         selectTab(.logMovie)
                     } label: {
-                        Label("Log a Movie", systemImage: "plus")
+                        Label("Add a Film", systemImage: "plus")
+                    }
+                    .buttonStyle(.primaryPillCompact)
+                    .padding(.top, 4)
+                }
+                .padding(.horizontal, 32)
+                .padding(.vertical, 24)
+                .frame(minHeight: 182)
+            }
+
+            BrandImprint()
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 26)
+    }
+
+    private var comingSoonEmptyState: some View {
+        VStack(spacing: 24) {
+            DashedSlot {
+                VStack(spacing: 10) {
+                    Text("Nothing showing soon.")
+                        .appStyle(.display)
+                        .foregroundStyle(AppColor.ink)
+                        .multilineTextAlignment(.center)
+
+                    Text("Found a film you plan to see? Save your seat and it will wait here.")
+                        .appStyle(.secondary)
+                        .foregroundStyle(AppColor.ink2)
+                        .multilineTextAlignment(.center)
+
+                    Button {
+                        selectTab(.logMovie)
+                    } label: {
+                        Label("Plan a Screening", systemImage: "plus")
                     }
                     .buttonStyle(.primaryPillCompact)
                     .padding(.top, 4)
@@ -110,7 +160,7 @@ struct CollectionView: View {
     }
 
     private var matches: [Ticket] {
-        TicketSearch.results(in: ticketStore.tickets, query: query)
+        TicketSearch.results(in: shownTickets, query: query)
     }
 
     private var matchCaption: String {
@@ -129,7 +179,7 @@ struct CollectionView: View {
             // A fresh book for each query, so a ticket pinned open earlier can't be left
             // selected after it drops out of the results.
             TicketBookView(
-                sections: TicketGrouping.months(from: matches),
+                sections: sections(for: matches),
                 onOpen: {
                     searchFocused = false
                     path.append($0)
@@ -153,9 +203,19 @@ struct CollectionView: View {
 
     private var ticketList: some View {
         TicketBookView(
-            sections: TicketGrouping.months(from: ticketStore.tickets),
+            sections: sections(for: shownTickets),
             onOpen: { path.append($0) }
         )
+        // A fresh book when switching sides, so the open ticket starts at the top.
+        .id(tab)
+    }
+
+    /// Screened tickets are grouped by the month watched, newest first; Coming Soon by the
+    /// month scheduled, soonest first, with the undated ones last.
+    private func sections(for tickets: [Ticket]) -> [TicketMonth] {
+        tab == .screened
+            ? TicketGrouping.months(from: tickets)
+            : TicketGrouping.comingSoonMonths(from: tickets)
     }
 }
 

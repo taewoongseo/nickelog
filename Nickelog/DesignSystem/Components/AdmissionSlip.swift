@@ -4,7 +4,7 @@ import SwiftUI
 /// double rule (the ticket's border, quieted), a top row with the serial number, and a
 /// dashed divider above the content.
 struct AdmissionSlip<Content: View>: View {
-    /// Six-digit serial, shown as "No. 000113".
+    /// Six-digit serial, shown as "No. 000113". Empty leaves the number spot blank.
     let serial: String
     @ViewBuilder var content: () -> Content
 
@@ -15,9 +15,11 @@ struct AdmissionSlip<Content: View>: View {
                     .appStyle(.labelSmall)
                     .foregroundStyle(AppColor.ink2)
                 Spacer(minLength: 12)
-                Text("No. \(serial)")
-                    .appStyle(.slipSerial)
-                    .foregroundStyle(AppColor.red)
+                if !serial.isEmpty {
+                    Text("No. \(serial)")
+                        .appStyle(.slipSerial)
+                        .foregroundStyle(AppColor.red)
+                }
             }
             .accessibilityElement(children: .combine)
 

@@ -51,7 +51,7 @@ extension ButtonStyle where Self == PillButtonStyle {
             .buttonStyle(.primaryPill)
         Button { } label: { Label("Save to Photos", systemImage: "arrow.down.to.line") }
             .buttonStyle(.secondaryPill)
-        Button { } label: { Label("Log a Movie", systemImage: "plus") }
+        Button { } label: { Label("Add a Film", systemImage: "plus") }
             .buttonStyle(.primaryPillCompact)
         Button("Pick a Design \u{2192}") { }
             .buttonStyle(.primaryPill)

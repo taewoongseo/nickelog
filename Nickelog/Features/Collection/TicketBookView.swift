@@ -62,7 +62,7 @@ struct TicketBookView: View {
                                 .buttonStyle(.plain)
                                 .id(ticket.id)
                                 .background(frameReader(for: ticket))
-                                .accessibilityLabel("\(ticket.title), \(ticket.dateWatched.formatted(date: .abbreviated, time: .omitted))")
+                                .accessibilityLabel(accessibilityLabel(for: ticket))
                                 .accessibilityValue(ticket.id == selectedID ? "Open" : "")
                                 .accessibilityHint(ticket.id == selectedID ? "Opens the ticket" : "Brings the ticket forward")
                             }
@@ -88,6 +88,14 @@ struct TicketBookView: View {
         .sensoryFeedback(.selection, trigger: selectedID) { old, new in
             old != nil && new != nil
         }
+    }
+
+    private func accessibilityLabel(for ticket: Ticket) -> String {
+        guard ticket.isPlanned else {
+            return "\(ticket.title), \(ticket.dateWatched.formatted(date: .abbreviated, time: .omitted))"
+        }
+        let when = ticket.scheduledDate?.formatted(date: .abbreviated, time: .omitted) ?? "date to be decided"
+        return "\(ticket.title), coming soon, \(when)"
     }
 
     private func selectedIndex(in section: TicketMonth) -> Int? {

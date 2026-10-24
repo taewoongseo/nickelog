@@ -7,6 +7,7 @@ struct SearchView: View {
     @State private var isSearching = false
     @State private var errorMessage: String?
     @State private var path = NavigationPath()
+    @State private var chosenMovie: Movie?
     @FocusState private var isSearchFocused: Bool
 
     private let tmdbService = TMDBService()
@@ -15,7 +16,7 @@ struct SearchView: View {
         NavigationStack(path: $path) {
             VStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: 14) {
-                    ScreenHeader(title: "Log a Movie", caption: "What did you see?")
+                    ScreenHeader(title: "Add a Film", caption: "Which one?")
                     AppSearchField(text: $query, placeholder: "Search films", isFocused: $isSearchFocused)
                         .padding(.horizontal, 16)
                 }
@@ -30,6 +31,24 @@ struct SearchView: View {
             .navigationDestination(for: Movie.self) { movie in
                 LogFormView(movie: movie, onFinish: { path = NavigationPath() })
             }
+            .navigationDestination(for: PlannedFilm.self) { planned in
+                PlanFormView(movie: planned.movie, onFinish: { path = NavigationPath() })
+            }
+            .sheet(item: $chosenMovie) { movie in
+                FilmChoiceSheet(
+                    movie: movie,
+                    onLog: {
+                        chosenMovie = nil
+                        path.append(movie)
+                    },
+                    onPlan: {
+                        chosenMovie = nil
+                        path.append(PlannedFilm(movie: movie))
+                    }
+                )
+                .presentationDetents([.height(360), .large])
+                .presentationDragIndicator(.visible)
+            }
             .onChange(of: query) { _, newValue in
                 search(for: newValue)
             }
@@ -42,7 +61,10 @@ struct SearchView: View {
 
     private var resultsList: some View {
         List(results) { movie in
-            NavigationLink(value: movie) {
+            Button {
+                isSearchFocused = false
+                chosenMovie = movie
+            } label: {
                 HStack {
                     Text(movie.title)
                         .appStyle(.bodyStrong)
@@ -53,9 +75,14 @@ struct SearchView: View {
                             .appStyle(.secondary)
                             .foregroundStyle(AppColor.ink2)
                     }
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(AppColor.muted)
                 }
                 .padding(.vertical, 6)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .listRowBackground(Color.clear)
             .listRowSeparatorTint(AppColor.divider)
         }

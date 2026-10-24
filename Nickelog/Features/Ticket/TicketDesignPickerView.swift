@@ -8,6 +8,8 @@ struct TicketDesignPickerView: View {
     /// Editing an existing ticket: its current design starts selected and its own
     /// serial number is shown, instead of the next free one.
     let isEditing: Bool
+    /// Saving a film to watch later: no number is shown, and the button saves it to Coming Soon.
+    let isPlanning: Bool
     let onPick: (TicketDesign) -> Void
 
     @EnvironmentObject private var ticketStore: TicketStore
@@ -15,16 +17,17 @@ struct TicketDesignPickerView: View {
 
     private let sideMargin: CGFloat = 24
 
-    init(draft: Ticket, isEditing: Bool = false, onPick: @escaping (TicketDesign) -> Void) {
+    init(draft: Ticket, isEditing: Bool = false, isPlanning: Bool = false, startingDesign: TicketDesign? = nil, onPick: @escaping (TicketDesign) -> Void) {
         self.draft = draft
         self.isEditing = isEditing
+        self.isPlanning = isPlanning
         self.onPick = onPick
-        _selectedDesign = State(initialValue: isEditing ? draft.design : .default)
+        _selectedDesign = State(initialValue: startingDesign ?? (isEditing ? draft.design : .default))
     }
 
     private var preview: Ticket {
         var ticket = draft
-        if !isEditing {
+        if !isEditing && !isPlanning {
             ticket.serialNumber = ticketStore.nextSerialNumber
         }
         return ticket
@@ -50,7 +53,7 @@ struct TicketDesignPickerView: View {
             Button {
                 onPick(selectedDesign)
             } label: {
-                Text(isEditing ? "Save Changes" : "Print My Ticket")
+                Text(isEditing ? "Save Changes" : (isPlanning ? "Save My Seat" : "Print My Ticket"))
             }
             .buttonStyle(.primaryPill)
             .padding(.horizontal, sideMargin)
@@ -59,7 +62,7 @@ struct TicketDesignPickerView: View {
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .appBackButton(isEditing ? "Edit" : "Log It")
+        .appBackButton(isEditing ? "Edit" : (isPlanning ? "Save a Seat" : "Log It"))
         .hidesTabBar()
     }
 

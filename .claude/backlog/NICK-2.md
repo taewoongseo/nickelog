@@ -34,3 +34,4 @@ Design the V1 backend: database tables, row-level security rules, and auth confi
 - Schema impact: the counter must be stored per user (e.g. a `next_serial` on `profiles`, or a database sequence per user), not derived as max(existing)+1, otherwise deleting the newest ticket would reuse its number.
 - `tickets` also needs: release year (nullable), serial, nullable location (max 25 chars), and a design id.
 - (from NICK-6 exploration) `tickets` should store `created_at` and `updated_at` separately; `updated_at` changes when a ticket is edited. Collection order is not changed by edits for now.
+- (from NICK-13, planned screenings) `tickets` also needs: a planned flag (default false), a nullable scheduled date, a nullable serial (planned tickets have none until logged), and a nullable date watched (the app currently keeps a placeholder for planned tickets). The serial counter only advances when a planned ticket is logged.

@@ -40,4 +40,36 @@ enum TicketGrouping {
         }
         return months
     }
+
+    /// The Coming Soon list: planned tickets grouped by month of their scheduled date,
+    /// soonest month first and soonest day first inside it, then a final "TBD" group for
+    /// tickets with no date, kept in the order they were saved (as `TicketStore` holds them).
+    static func comingSoonMonths(from planned: [Ticket], calendar: Calendar = .current) -> [TicketMonth] {
+        let dated = planned.enumerated()
+            .filter { $0.element.scheduledDate != nil }
+            .sorted { lhs, rhs in
+                let leftDay = calendar.startOfDay(for: lhs.element.scheduledDate ?? .distantFuture)
+                let rightDay = calendar.startOfDay(for: rhs.element.scheduledDate ?? .distantFuture)
+                return leftDay != rightDay ? leftDay < rightDay : lhs.offset < rhs.offset
+            }
+            .map(\.element)
+
+        var months: [TicketMonth] = []
+        for ticket in dated {
+            guard let date = ticket.scheduledDate else { continue }
+            let parts = calendar.dateComponents([.year, .month], from: date)
+            let id = String(format: "%04ld-%02ld", parts.year ?? 0, parts.month ?? 0)
+            if months.last?.id == id {
+                months[months.count - 1].tickets.append(ticket)
+            } else {
+                months.append(TicketMonth(id: id, title: date.formatted(.dateTime.month(.wide).year()), tickets: [ticket]))
+            }
+        }
+
+        let undated = planned.filter { $0.scheduledDate == nil }
+        if !undated.isEmpty {
+            months.append(TicketMonth(id: "tbd", title: "TBD", tickets: undated))
+        }
+        return months
+    }
 }

@@ -133,4 +133,48 @@ final class TicketBookTests: XCTestCase {
 
         XCTAssertFalse(TicketSearch.matches(noPlace, query: "metrograph"))
     }
+
+    // MARK: Coming Soon
+
+    private func planned(_ title: String, on scheduled: Date? = nil) -> Ticket {
+        Ticket(tmdbMovieID: title.count, title: title, posterURL: nil, dateWatched: .now, location: nil, oneLineReview: "", isPlanned: true, scheduledDate: scheduled)
+    }
+
+    func testComingSoonIsSoonestFirstGroupedByMonth() {
+        let late = planned("Late", on: date(2026, 12, 20))
+        let soon = planned("Soon", on: date(2026, 11, 2))
+        let sameMonth = planned("Same month", on: date(2026, 11, 25))
+
+        let months = TicketGrouping.comingSoonMonths(from: [late, sameMonth, soon], calendar: calendar)
+
+        XCTAssertEqual(months.map(\.id), ["2026-11", "2026-12"])
+        XCTAssertEqual(months[0].tickets.map(\.title), ["Soon", "Same month"])
+        XCTAssertEqual(months[1].tickets.map(\.title), ["Late"])
+    }
+
+    func testComingSoonPutsUndatedTicketsLastInSavedOrder() {
+        let dated = planned("Dated", on: date(2026, 11, 2))
+        let tbdNewer = planned("Newer")
+        let tbdOlder = planned("Older")
+
+        // The store holds the most recently saved first.
+        let months = TicketGrouping.comingSoonMonths(from: [tbdNewer, dated, tbdOlder], calendar: calendar)
+
+        XCTAssertEqual(months.map(\.id), ["2026-11", "tbd"])
+        XCTAssertEqual(months.last?.title, "TBD")
+        XCTAssertEqual(months.last?.tickets.map(\.title), ["Newer", "Older"])
+    }
+
+    func testComingSoonIsEmptyWithNothingPlanned() {
+        XCTAssertTrue(TicketGrouping.comingSoonMonths(from: [], calendar: calendar).isEmpty)
+    }
+
+    func testSearchWorksOnPlannedTicketsByTitleAndPlace() {
+        var film = planned("Jaws")
+        film.location = "Metrograph"
+
+        XCTAssertEqual(TicketSearch.results(in: [film], query: "jaw").count, 1)
+        XCTAssertEqual(TicketSearch.results(in: [film], query: "metro").count, 1)
+        XCTAssertTrue(TicketSearch.results(in: [film], query: "xyz").isEmpty)
+    }
 }

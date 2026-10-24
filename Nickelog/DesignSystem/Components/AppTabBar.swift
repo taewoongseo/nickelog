@@ -6,7 +6,7 @@ enum AppTab: Hashable, CaseIterable {
     var title: String {
         switch self {
         case .collection: "Collection"
-        case .logMovie: "Log a Movie"
+        case .logMovie: "Add a Film"
         }
     }
 
@@ -75,7 +75,7 @@ private struct SelectTabKey: EnvironmentKey {
 }
 
 extension EnvironmentValues {
-    /// Lets a screen switch tabs (for example the empty Collection's "Log a Movie" button).
+    /// Lets a screen switch tabs (for example the empty Collection's "Add a Film" button).
     var selectTab: (AppTab) -> Void {
         get { self[SelectTabKey.self] }
         set { self[SelectTabKey.self] = newValue }

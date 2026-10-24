@@ -14,6 +14,7 @@ struct TicketView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.selectTab) private var selectTab
     @State private var isEditing = false
+    @State private var isLogging = false
     @State private var isConfirmingDelete = false
 
     private let sideMargin: CGFloat = 24
@@ -35,11 +36,21 @@ struct TicketView: View {
                 .shadow(color: .black.opacity(0.18), radius: 20, y: 9)
                 .padding(.horizontal, sideMargin)
 
-            ShareLink(item: shareText) {
-                Label("Share Ticket", systemImage: "square.and.arrow.up")
+            if ticket.isPlanned {
+                Button {
+                    isLogging = true
+                } label: {
+                    Text("Log My Stub")
+                }
+                .buttonStyle(.primaryPill)
+                .padding(.horizontal, sideMargin)
+            } else {
+                ShareLink(item: shareText) {
+                    Label("Share Ticket", systemImage: "square.and.arrow.up")
+                }
+                .buttonStyle(.primaryPill)
+                .padding(.horizontal, sideMargin)
             }
-            .buttonStyle(.primaryPill)
-            .padding(.horizontal, sideMargin)
 
             HStack(spacing: 12) {
                 Button("Edit") {
@@ -58,11 +69,11 @@ struct TicketView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AppColor.ground.ignoresSafeArea())
-        .navigationTitle("No. \(ticket.formattedSerial)")
+        .navigationTitle(titleText)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text("No. \(ticket.formattedSerial)")
+                Text(titleText)
                     .appStyle(.serial)
                     .foregroundStyle(AppColor.ink)
             }
@@ -72,12 +83,21 @@ struct TicketView: View {
         // Edit runs the logging steps again, pre-filled, then drops back to this screen,
         // which shows the saved changes because it reads the ticket from the store.
         .navigationDestination(isPresented: $isEditing) {
-            LogFormView(editing: ticket, onSaved: { isEditing = false })
+            if ticket.isPlanned {
+                PlanFormView(editing: ticket, onSaved: { isEditing = false })
+            } else {
+                LogFormView(editing: ticket, onSaved: { isEditing = false })
+            }
+        }
+        // Logging a planned film runs the admission slip, then drops back to this screen,
+        // which then shows the logged ticket with its new number.
+        .navigationDestination(isPresented: $isLogging) {
+            LogFormView(logging: ticket, onLogged: { isLogging = false })
         }
         .confirmationDialog("Delete this ticket?", isPresented: $isConfirmingDelete, titleVisibility: .visible) {
             Button("Delete Ticket", role: .destructive, action: deleteTicket)
         } message: {
-            Text("It can't be brought back, and its number won't be used again.")
+            Text(ticket.isPlanned ? "It can't be brought back." : "It can't be brought back, and its number won't be used again.")
         }
     }
 
@@ -91,6 +111,11 @@ struct TicketView: View {
         } else {
             dismiss()
         }
+    }
+
+    /// "No. 000012" for a logged ticket; "ADVANCE" for a film still to be watched.
+    private var titleText: String {
+        ticket.isPlanned ? "ADVANCE" : "No. \(ticket.formattedSerial)"
     }
 
     private var shareText: String {

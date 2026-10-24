@@ -44,7 +44,7 @@ extension ScreenHeader where Trailing == EmptyView {
             IconButton(systemName: "magnifyingglass", accessibilityLabel: "Search", action: {})
             IconButton(systemName: "person", accessibilityLabel: "Account", action: {})
         }
-        ScreenHeader(title: "Log a Movie", caption: "What did you see?")
+        ScreenHeader(title: "Add a Film", caption: "Which one?")
     }
     .background(AppColor.ground)
 }
