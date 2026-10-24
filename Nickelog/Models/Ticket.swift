@@ -17,6 +17,8 @@ struct Ticket: Identifiable, Codable, Hashable {
     /// `TicketStore.addAssigningSerial(_:)` assigns the real value.
     var serialNumber: Int
     var createdAt: Date
+    /// When the ticket was last edited; `nil` if it never has been.
+    var updatedAt: Date?
 
     init(
         id: UUID = UUID(),
@@ -30,7 +32,8 @@ struct Ticket: Identifiable, Codable, Hashable {
         rating: Int? = nil,
         templateID: String = TicketDesign.default.rawValue,
         serialNumber: Int = 0,
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        updatedAt: Date? = nil
     ) {
         self.id = id
         self.tmdbMovieID = tmdbMovieID
@@ -44,6 +47,7 @@ struct Ticket: Identifiable, Codable, Hashable {
         self.templateID = templateID
         self.serialNumber = serialNumber
         self.createdAt = createdAt
+        self.updatedAt = updatedAt
     }
 
     /// The chosen design, falling back to the default if the stored id is unknown.

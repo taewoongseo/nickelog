@@ -5,16 +5,28 @@ import SwiftUI
 struct TicketDesignPickerView: View {
     /// The ticket as filled in so far; its design and serial are set here.
     let draft: Ticket
+    /// Editing an existing ticket: its current design starts selected and its own
+    /// serial number is shown, instead of the next free one.
+    let isEditing: Bool
     let onPick: (TicketDesign) -> Void
 
     @EnvironmentObject private var ticketStore: TicketStore
-    @State private var selectedDesign: TicketDesign = .default
+    @State private var selectedDesign: TicketDesign
 
     private let sideMargin: CGFloat = 24
 
+    init(draft: Ticket, isEditing: Bool = false, onPick: @escaping (TicketDesign) -> Void) {
+        self.draft = draft
+        self.isEditing = isEditing
+        self.onPick = onPick
+        _selectedDesign = State(initialValue: isEditing ? draft.design : .default)
+    }
+
     private var preview: Ticket {
         var ticket = draft
-        ticket.serialNumber = ticketStore.nextSerialNumber
+        if !isEditing {
+            ticket.serialNumber = ticketStore.nextSerialNumber
+        }
         return ticket
     }
 
@@ -38,7 +50,7 @@ struct TicketDesignPickerView: View {
             Button {
                 onPick(selectedDesign)
             } label: {
-                Text("Print My Ticket")
+                Text(isEditing ? "Save Changes" : "Print My Ticket")
             }
             .buttonStyle(.primaryPill)
             .padding(.horizontal, sideMargin)
@@ -47,7 +59,7 @@ struct TicketDesignPickerView: View {
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .appBackButton("Log It")
+        .appBackButton(isEditing ? "Edit" : "Log It")
         .hidesTabBar()
     }
 

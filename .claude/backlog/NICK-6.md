@@ -1,7 +1,7 @@
 # PRD: Edit or delete a ticket after creation
 
 **Ticket:** NICK-6
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Created:** 2026-10-17
 
 ---
@@ -29,15 +29,15 @@ The ticket screen gets two options, Edit and Delete.
 
 | # | Task | Status |
 |---|------|--------|
-| 1 | Add an `updatedAt` field to `Ticket` (additive; `createdAt` unchanged) | ⬜ Not started |
-| 2 | Add an update-by-id method to `TicketStore` that changes a ticket in place, keeps its position and serial, and sets `updatedAt` (existing `add`/`delete` unchanged) | ⬜ Not started |
-| 3 | Make `TicketView` read the current ticket from the store by id so it never shows stale values after an edit | ⬜ Not started |
-| 4 | Add Edit and Delete buttons to the ticket screen | ⬜ Not started |
-| 5 | Add the delete confirmation, remove the ticket through `TicketStore`, and return to the collection | ⬜ Not started |
-| 6 | Add an edit mode to the details form: pre-filled from an existing ticket, no movie selection required, same input rules as logging | ⬜ Not started |
-| 7 | Open the design picker in the edit flow with the ticket's current design selected | ⬜ Not started |
-| 8 | Wire the edit flow: details form, design picker, printing animation, then the updated ticket, saving through the store's update method | ⬜ Not started |
-| 9 | Make `CollectionView` navigation stay consistent after an edit or a delete | ⬜ Not started |
+| 1 | Add an `updatedAt` field to `Ticket` (additive; `createdAt` unchanged) | ✅ Done |
+| 2 | Add an update-by-id method to `TicketStore` that changes a ticket in place, keeps its position and serial, and sets `updatedAt` (existing `add`/`delete` unchanged) | ✅ Done |
+| 3 | Make `TicketView` read the current ticket from the store by id so it never shows stale values after an edit | ✅ Done |
+| 4 | Add Edit and Delete buttons to the ticket screen | ✅ Done |
+| 5 | Add the delete confirmation, remove the ticket through `TicketStore`, and return to the collection | ✅ Done |
+| 6 | Add an edit mode to the details form: pre-filled from an existing ticket, no movie selection required, same input rules as logging | ✅ Done |
+| 7 | Open the design picker in the edit flow with the ticket's current design selected | ✅ Done |
+| 8 | Wire the edit flow: details form, design picker, printing animation, then the updated ticket, saving through the store's update method | ✅ Done |
+| 9 | Make `CollectionView` navigation stay consistent after an edit or a delete | ✅ Done |
 
 **Status legend:**
 - ⬜ Not started
@@ -69,3 +69,5 @@ The ticket screen gets two options, Edit and Delete.
 
 ## Open Questions
 None. Dependencies: this ticket needs NICK-4 (the new `Ticket` fields, serial, design picker) and NICK-5 (the printing animation) first, and none of it can be built or tested until Xcode is installed. This PRD has no unit-test task because tests weren't requested during exploration.
+- Update (2026-10-24): the Ticket Book orders by date watched, so editing a ticket's date moves it to the right month there, even though the store keeps its slot. This was accepted. Both `createdAt` and `updatedAt` are stored, so the ordering can be changed later in `TicketGrouping`.
+- Saving an edit with no changes leaves the ticket untouched (no `updatedAt`).

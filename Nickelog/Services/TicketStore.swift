@@ -31,6 +31,29 @@ final class TicketStore: ObservableObject {
         return numbered
     }
 
+    /// Saves an edit to a ticket in place. Only the editable parts are taken from
+    /// `edited` (date, place, review and design); the movie, serial number, creation
+    /// date and position in the collection stay as they were, and `updatedAt` is set.
+    /// If nothing actually changed, the ticket is left alone (including `updatedAt`).
+    /// Returns the ticket as stored, or `nil` if it no longer exists.
+    @discardableResult
+    func update(_ edited: Ticket) -> Ticket? {
+        guard let index = tickets.firstIndex(where: { $0.id == edited.id }) else { return nil }
+        var ticket = tickets[index]
+        let isUnchanged = ticket.dateWatched == edited.dateWatched
+            && ticket.location == edited.location
+            && ticket.oneLineReview == edited.oneLineReview
+            && ticket.templateID == edited.templateID
+        if isUnchanged { return ticket }
+        ticket.dateWatched = edited.dateWatched
+        ticket.location = edited.location
+        ticket.oneLineReview = edited.oneLineReview
+        ticket.templateID = edited.templateID
+        ticket.updatedAt = Date()
+        tickets[index] = ticket
+        return ticket
+    }
+
     func delete(_ ticket: Ticket) {
         tickets.removeAll { $0.id == ticket.id }
     }
