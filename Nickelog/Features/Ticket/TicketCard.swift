@@ -72,19 +72,15 @@ private struct TicketMainBody: View {
             bottomHalf
                 .frame(maxHeight: .infinity)
         }
-        .padding(.top, 16 * scale)
+        .padding(.top, 36 * scale)
         .padding(.bottom, 36 * scale)
         .padding(.leading, 68 * scale)
         .padding(.trailing, 56 * scale)
     }
 
-    /// Title and year hug the top so a two-line title plus the year stay inside the
-    /// 64pt that shows when the ticket is overlapped in the Ticket Book (`RiffleLayout.peek`);
-    /// the date box sits at the bottom of the half. Re-check a render of the top 64pt if
-    /// the peek, the title sizes, or this spacing change.
     private var topHalf: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 6 * scale) {
+        VStack(alignment: .leading, spacing: 16 * scale) {
+            VStack(alignment: .leading, spacing: 14 * scale) {
                 Text(ticket.title)
                     .font(theme.title.font(scale: scale))
                     .lineSpacing(theme.title.lineSpacing(scale: scale))
@@ -102,11 +98,9 @@ private struct TicketMainBody: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            Spacer(minLength: 16 * scale)
-
             DateLocationBox(ticket: ticket, theme: theme, scale: scale)
         }
-        .frame(maxHeight: .infinity, alignment: .top)
+        .frame(maxHeight: .infinity, alignment: .center)
     }
 
     private var bottomHalf: some View {

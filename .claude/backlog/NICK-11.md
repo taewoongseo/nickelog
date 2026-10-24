@@ -1,7 +1,7 @@
 # PRD: Make the ticket title readable inside the Ticket Book's 64pt peek
 
 **Ticket:** NICK-11
-**Status:** ✅ Complete
+**Status:** ❌ Closed, not doing (2026-10-24): the smaller titles were tried and reverted as too small. Two-line titles stay cut in the Ticket Book's 64pt peek by choice; the opened ticket shows the full title.
 **Created:** 2026-10-24
 
 ---
