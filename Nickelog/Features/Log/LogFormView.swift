@@ -24,6 +24,11 @@ struct LogFormView: View {
     @State private var navigateToPicker = false
     @State private var navigateToTicket = false
     @State private var createdTicket: Ticket?
+    @FocusState private var focusedField: Field?
+
+    private enum Field {
+        case location, review
+    }
 
     init(movie: Movie, onFinish: @escaping () -> Void) {
         mode = .log(movie: movie, onFinish: onFinish)
@@ -90,6 +95,7 @@ struct LogFormView: View {
             Text(title)
                 .appStyle(.filmTitle)
                 .foregroundStyle(AppColor.ink)
+                .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
             if let year = releaseYear {
                 Text(String(year))
@@ -98,72 +104,111 @@ struct LogFormView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 24)
         .padding(.top, 8)
-        .padding(.bottom, 4)
+    }
+
+    private var slipSerial: String {
+        switch mode {
+        case .log: String(format: "%06d", ticketStore.nextSerialNumber)
+        case .edit(let ticket, _): ticket.formattedSerial
+        }
     }
 
     private var form: some View {
-        Form {
-            Section {
-                DatePicker("Date watched", selection: $dateWatched, in: ...Date(), displayedComponents: .date)
-                    .appStyle(.body)
-                    .listRowBackground(AppColor.surface)
-                TextField("Where did you watch it? (optional)", text: $location)
-                    .appStyle(.body)
-                    .listRowBackground(AppColor.surface)
-                    .onChange(of: location) { _, newValue in
-                        let clamped = TicketInput.clampedLocation(newValue)
-                        if clamped != newValue {
-                            location = clamped
+        ScrollView {
+            VStack(spacing: 22) {
+                AdmissionSlip(serial: slipSerial) {
+                    SlipField(label: "Screened") {
+                        HStack {
+                            DatePicker("Date watched", selection: $dateWatched, in: ...Date(), displayedComponents: .date)
+                                .labelsHidden()
+                            Spacer(minLength: 0)
                         }
                     }
-                counter(count: location.count, limit: TicketInput.locationCharacterLimit)
-            } header: {
-                sectionHeader("Details")
-            }
 
-            Section {
-                TextField("What did you think?", text: $oneLineReview, axis: .vertical)
-                    .appStyle(.body)
-                    .listRowBackground(AppColor.surface)
-                    .onChange(of: oneLineReview) { _, newValue in
-                        if newValue.count > TicketInput.reviewCharacterLimit {
-                            oneLineReview = String(newValue.prefix(TicketInput.reviewCharacterLimit))
-                        }
+                    SlipField(
+                        label: "Played at",
+                        counter: (location.count, TicketInput.locationCharacterLimit, TicketInput.locationWarningCount),
+                        isFocused: focusedField == .location
+                    ) {
+                        TextField("", text: $location, prompt: Text("AMC Lincoln Square, Netflix, couch").foregroundStyle(AppColor.mutedSlip))
+                            .appStyle(.slipEntry)
+                            .foregroundStyle(AppColor.ink)
+                            .focused($focusedField, equals: .location)
+                            .accessibilityLabel("Played at, optional")
+                            .onChange(of: location) { _, newValue in
+                                let clamped = TicketInput.clampedLocation(newValue)
+                                if clamped != newValue {
+                                    location = clamped
+                                }
+                            }
                     }
-                counter(count: oneLineReview.count, limit: TicketInput.reviewCharacterLimit)
-            } header: {
-                sectionHeader("One-line review")
-            }
 
-            Section {
-                Button {
-                    draftTicket = makeDraft()
-                    navigateToPicker = true
-                } label: {
-                    Text("Pick a Design \u{2192}")
+                    SlipField(
+                        label: "One-line review",
+                        counter: (oneLineReview.count, TicketInput.reviewCharacterLimit, TicketInput.reviewWarningCount),
+                        isFocused: focusedField == .review
+                    ) {
+                        TextField("", text: $oneLineReview, prompt: Text("One line. Make it count.").foregroundStyle(AppColor.mutedSlip), axis: .vertical)
+                            .appStyle(.slipReview)
+                            .foregroundStyle(AppColor.ink)
+                            .lineLimit(3, reservesSpace: true)
+                            .focused($focusedField, equals: .review)
+                            .accessibilityLabel("One-line review")
+                            .onChange(of: oneLineReview) { _, newValue in
+                                let clamped = TicketInput.clampedReview(newValue)
+                                if clamped != newValue {
+                                    oneLineReview = clamped
+                                    // The Return key can't add a line here, so it means "done".
+                                    if newValue.contains(where: \.isNewline) {
+                                        focusedField = nil
+                                    }
+                                }
+                            }
+                    }
                 }
-                .buttonStyle(.primaryPill)
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
+                .padding(.horizontal, 16)
+            }
+            .padding(.top, 22)
+            .padding(.bottom, 24)
+        }
+        .scrollDismissesKeyboard(.interactively)
+        // Pinned under the form; as a bottom inset it also rides above the keyboard.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            pickDesignButton
+        }
+    }
+
+    private var isReviewWritten: Bool {
+        TicketInput.isReviewWritten(oneLineReview)
+    }
+
+    private var pickDesignButton: some View {
+        VStack(spacing: 8) {
+            Button {
+                focusedField = nil
+                draftTicket = makeDraft()
+                navigateToPicker = true
+            } label: {
+                Text("Pick a Design \u{2192}")
+            }
+            .buttonStyle(.primaryPill)
+            .disabled(!isReviewWritten)
+            .accessibilityHint(isReviewWritten ? "" : "Add a one-line review to continue.")
+
+            if !isReviewWritten {
+                Text("Add a one-line review to continue.")
+                    .appStyle(.secondary)
+                    .foregroundStyle(AppColor.ink2)
             }
         }
-        .scrollContentBackground(.hidden)
-    }
-
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title)
-            .appStyle(.labelSmall)
-            .foregroundStyle(AppColor.ink2)
-    }
-
-    private func counter(count: Int, limit: Int) -> some View {
-        Text("\(count)/\(limit)")
-            .appStyle(.counter)
-            .foregroundStyle(AppColor.ink2)
-            .listRowBackground(AppColor.surface)
-            .accessibilityLabel("\(count) of \(limit) characters")
+        .padding(.horizontal, 24)
+        .padding(.top, 10)
+        // 34pt above the bottom edge; tighter once the keyboard is up.
+        .padding(.bottom, focusedField == nil ? 34 : 10)
+        .frame(maxWidth: .infinity)
+        .background(AppColor.ground)
     }
 
     private func makeDraft() -> Ticket {
@@ -176,13 +221,13 @@ struct LogFormView: View {
                 posterURL: movie.posterURL,
                 dateWatched: dateWatched,
                 location: TicketInput.savedLocation(location),
-                oneLineReview: oneLineReview
+                oneLineReview: TicketInput.savedReview(oneLineReview)
             )
         case .edit(let ticket, _):
             var edited = ticket
             edited.dateWatched = dateWatched
             edited.location = TicketInput.savedLocation(location)
-            edited.oneLineReview = oneLineReview
+            edited.oneLineReview = TicketInput.savedReview(oneLineReview)
             return edited
         }
     }

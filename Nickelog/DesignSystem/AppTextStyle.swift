@@ -11,7 +11,7 @@ enum AppTextStyle: CaseIterable {
     case label, labelSmall
     case body, bodyStrong, bodyStrongSmall, callout, secondary
     case counter, tab
-    case serial, slipEntry, slipReview
+    case serial, slipSerial, slipEntry, slipReview
     case imprint, filmYear
 
     /// Bundled font name, or `nil` for styles set in the system font (SF).
@@ -20,7 +20,7 @@ enum AppTextStyle: CaseIterable {
         case .largeTitle, .filmTitle: "BodoniModa-Regular_Bold"
         case .display, .filmYear: "BodoniModa-Italic_Medium-Italic"
         case .label, .labelSmall: "Oswald-Regular_Medium"
-        case .serial, .slipEntry: "CourierPrime-Bold"
+        case .serial, .slipSerial, .slipEntry: "CourierPrime-Bold"
         case .slipReview: "OldStandardTT-Italic"
         case .imprint: "Limelight-Regular"
         case .body, .bodyStrong, .bodyStrongSmall, .callout, .secondary, .counter, .tab: nil
@@ -36,6 +36,7 @@ enum AppTextStyle: CaseIterable {
         case .label: 12
         case .labelSmall: 11
         case .serial: 14
+        case .slipSerial: 12
         case .slipEntry: 15
         case .slipReview: 17
         case .imprint: 13
@@ -72,6 +73,7 @@ enum AppTextStyle: CaseIterable {
         case .callout: .callout
         case .counter: .caption
         case .serial: .footnote
+        case .slipSerial: .caption
         case .slipEntry: .subheadline
         case .slipReview: .body
         case .imprint: .footnote
